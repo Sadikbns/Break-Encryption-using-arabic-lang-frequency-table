@@ -76,7 +76,7 @@ class ArabicCryptoUI:
         self.build_test_tab()
         self.build_main_tab()
 
-    # ====================== NEW TAB: Scrape News Websites ======================
+        # ====================== TAB: Scrape News Websites ======================
     def build_scrape_tab(self):
         frame = ttk.Frame(self.tab_scrape, padding=15)
         frame.pack(fill='both', expand=True)
@@ -84,13 +84,11 @@ class ArabicCryptoUI:
         ttk.Label(frame, text="Scrape Arabic News Websites", 
                  font=('Arial', 16, 'bold')).pack(pady=(0, 15))
 
-        # Instructions
         info = ttk.Label(frame, text="Click the button below to scrape multiple Arabic news websites and build/update the frequency table.\n"
-                                    "This may take 20-60 seconds depending on your internet connection.",
-                        wraplength=900, justify='center')
+                                    "This may take 30-90 seconds depending on your internet connection.",
+                        wraplength=1000, justify='center')
         info.pack(pady=10)
 
-        # Buttons
         btn_frame = ttk.Frame(frame)
         btn_frame.pack(pady=15)
 
@@ -102,22 +100,21 @@ class ArabicCryptoUI:
         ttk.Checkbutton(btn_frame, text="Force re-scrape (ignore cache)", 
                        variable=self.force_var).pack(side='left', padx=10)
 
-        # Status and Progress
         self.status_var = tk.StringVar(value="Ready to scrape...")
         status_label = ttk.Label(frame, textvariable=self.status_var, font=('Arial', 10))
         status_label.pack(pady=8)
 
-        # Scraped Text Output
-        ttk.Label(frame, text="Scraped Raw Arabic Text (preview):", font=('Arial', 11, 'bold')).pack(anchor='w', pady=(15,5))
+        # Improved label
+        ttk.Label(frame, text="Scraped Raw Arabic Text (preview - first 5000 characters):", 
+                 font=('Arial', 11, 'bold')).pack(anchor='w', pady=(15,5))
 
-        self.scraped_text_widget = scrolledtext.ScrolledText(frame, height=18, font=('Arial', 10))
+        self.scraped_text_widget = scrolledtext.ScrolledText(frame, height=20, font=('Arial', 10))
         self.scraped_text_widget.pack(fill='both', expand=True, pady=5)
 
-        # Info about sites
-        sites_frame = ttk.LabelFrame(frame, text=f"News Websites to be scraped ({len(sites)} sites)", padding=8)
+        sites_frame = ttk.LabelFrame(frame, text=f"News Websites being scraped ({len(sites)} sites)", padding=8)
         sites_frame.pack(fill='x', pady=10)
 
-        sites_text = ", ".join(sites.keys())
+        sites_text = ", ".join(sorted(sites.keys()))
         ttk.Label(sites_frame, text=sites_text, wraplength=1100, justify='left', foreground='gray').pack()
 
     def start_scraping(self):
@@ -143,23 +140,28 @@ class ArabicCryptoUI:
             self.root.after(0, lambda: self.scraping_error(str(e)))
 
     def finish_scraping(self, text):
-        # Show preview of scraped text
-        preview = text[:1500] + "..." if len(text) > 1500 else text
+        # Show much more text in preview (first 5000 characters)
+        preview_length = 5000
+        preview = text[:preview_length]
+        if len(text) > preview_length:
+            preview += f"\n\n... [showing first {preview_length:,} characters out of {len(text):,} total]"
+
         self.scraped_text_widget.delete("1.0", tk.END)
         self.scraped_text_widget.insert(tk.END, preview)
 
         char_count = len(text)
-        self.status_var.set(f"✅ Scraping completed successfully! Total characters: {char_count:,}")
+        self.status_var.set(f"✅ Scraping completed! Total characters collected: {char_count:,}")
 
-        messagebox.showinfo("Success", 
-            f"Scraping completed!\n\n"
-            f"Total Arabic text collected: {char_count:,} characters\n"
-            f"Cache saved to: {CACHE_FILE}\n\n"
-            f"You can now go to the 'Frequency Table' tab to see updated frequencies.\n"
-            f"Run freq_table_builder.py manually if you want to regenerate the .json file.")
-
+        messagebox.showinfo("Scraping Successful", 
+            f"Scraping completed successfully!\n\n"
+            f"• Total Arabic text collected: {char_count:,} characters\n"
+            f"• Cache saved to: {CACHE_FILE}\n\n"
+            f"You can now:\n"
+            f"1. Go to 'Frequency Table' tab to view statistics\n"
+            f"2. Run freq_table_builder.py to update arabic_freq_table.json")
+        
         self.scrape_btn.config(state='normal')
-
+        
     def scraping_error(self, error_msg):
         self.status_var.set("❌ Scraping failed")
         messagebox.showerror("Scraping Error", f"An error occurred during scraping:\n\n{error_msg}")
