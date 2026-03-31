@@ -114,3 +114,4 @@ def substitution_decrypt(ciphertext: str, substitution: dict = arabic_substituti
     for ch in ciphertext:
         result.append(reverse_sub.get(ch, ch))
     return ''.join(result)
+
